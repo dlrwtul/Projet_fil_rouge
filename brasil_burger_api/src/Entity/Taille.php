@@ -18,7 +18,13 @@ use Symfony\Component\Validator\Constraints\Unique;
 #[ApiResource(
     attributes: ["security" => "is_granted('ROLE_GESTIONNAIRE')"],
     denormalizationContext: ['groups' => ['taille:write']],
-    normalizationContext: ['groups' => ['taille:write','taille:read']],
+    normalizationContext: ['groups' => ['taille:write']],
+    /* subresourceOperations: [
+        'api_boissons_taille_get_subresource' => [
+            'method' => 'GET',
+            'normalization_context' => ['groups' => ['taille:write']],
+        ],
+    ], */
     collectionOperations: [
         'post',
     ],
@@ -33,21 +39,19 @@ class Taille
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Groups("taille:write")]
     private $id;
 
     #[ORM\Column(type: 'string', length: 255,unique:true)]
     #[Assert\NotBlank(message:"libelle obligatoire")]
-    #[Groups("taille:write")]
+    #[Groups(["taille:write","boisson:read"])]
     private $libelle;
 
     #[ORM\Column(type: 'float')]
     #[Assert\NotBlank(message:"prix obligatoire")]
-    #[Groups("taille:write")]
+    #[Groups(["taille:write","boisson:read"])]
     private $prix;
 
     #[ORM\ManyToMany(targetEntity: Boisson::class, inversedBy: 'tailles')]
-    #[Groups("taille:read")]
     private $boissons;
 
     #[ORM\ManyToOne(targetEntity: Complement::class, inversedBy: 'tailles')]

@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\Client;
+use App\Entity\Livreur;
 use Symfony\Component\Mime\Email;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -39,13 +41,23 @@ class RegistrationsController extends AbstractController {
 
         try {
 
-            $user = $serializer->deserialize($data,User::class,'json');
+            $route = explode('/', $request->getRequestUri());
+            unset($route[0],$route[1]);
+            $route = array_values($route);
+
+            if ($route[0] == "clients") {
+                $user = $serializer->deserialize($data,Client::class,'json');
+            } elseif ($route[0] == "livreurs") {
+                $user = $serializer->deserialize($data,Livreur::class,'json');
+            } else {
+                $user = $serializer->deserialize($data,User::class,'json');
+            }
+                
             $errors = $validator->validate($user);
 
             if(count($errors) == 0) {
 
                 $check = $userRepository->findOneBy(array('login' => $user->getLogin()));
-
                 if (null == $check) {
 
                     if($user->getPassword() == $user->getConfirmPassword()) {
@@ -80,8 +92,10 @@ class RegistrationsController extends AbstractController {
                 }
                 
             } else {
-                
-                $this->json($errors,400);
+                /* foreach ($errors as $error) {
+                    $jsonErrors[] = $error->getMessage();
+                } */
+                return $this->json($errors,400);
             }
             
         } catch (NotEncodableValueException $th) {
