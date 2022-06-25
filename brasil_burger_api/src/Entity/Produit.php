@@ -7,7 +7,6 @@ use App\Repository\ProduitRepository;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Constraints\Unique;
 
 #[ORM\Entity(repositoryClass: ProduitRepository::class)]
 #[ORM\InheritanceType("JOINED")]
@@ -21,7 +20,7 @@ class Produit
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     #[Groups("product:read")]
-    private $id;
+    protected $id;
 
     #[ORM\Column(type: 'string', length: 255,unique: true )]
     #[Assert\NotBlank(message:"Nom obligatoire")]
@@ -40,6 +39,9 @@ class Produit
 
     #[ORM\Column(type: 'boolean')]
     private $isEtat = true;
+
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'produits')]
+    private $user;
 
     public function getId(): ?int
     {
@@ -90,6 +92,18 @@ class Produit
     public function setIsEtat(bool $isEtat): self
     {
         $this->isEtat = $isEtat;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }

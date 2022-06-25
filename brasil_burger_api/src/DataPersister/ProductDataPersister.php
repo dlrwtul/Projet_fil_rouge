@@ -2,16 +2,19 @@
 
 namespace App\DataPersister;
 
+use App\Entity\Produit;
 use Doctrine\ORM\EntityManagerInterface;
 use ApiPlatform\Core\DataPersister\DataPersisterInterface;
-use App\Entity\Produit;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class ProductDataPersister implements DataPersisterInterface {
 
     private $entityManager;
+    private $tokenStorage;
 
-    public function __construct(EntityManagerInterface $entityManager) {
+    public function __construct(EntityManagerInterface $entityManager,TokenStorageInterface $tokenStorage) {
         $this->entityManager = $entityManager;
+        $this->tokenStorage = $tokenStorage;
     }
 
     public function supports($data, array $context = []): bool
@@ -22,7 +25,8 @@ class ProductDataPersister implements DataPersisterInterface {
     public function persist($data, array $context = [])
     {
         // call your persistence layer to save $data
-        dd($data);
+        $user = $this->tokenStorage->getToken()->getUser();
+        $data->setUser($user);
         $this->entityManager->persist($data);
         $this->entityManager->flush();
         return $data;
