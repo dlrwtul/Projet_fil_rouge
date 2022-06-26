@@ -7,9 +7,22 @@ use App\Repository\CatalogueRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CatalogueRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    attributes: ["security" => "is_granted('ROLE_GESTIONNAIRE')"],
+    itemOperations: [
+        'get' => [
+            'normalization_context' => ['groups' => ["product:write"]]
+        ]
+    ],
+    collectionOperations: [
+        'post' => [
+            'denormalization_context' => ['groups' => ["nothing"]]
+        ]
+    ]
+)]
 class Catalogue
 {
     #[ORM\Id]
@@ -18,9 +31,11 @@ class Catalogue
     private $id;
 
     #[ORM\OneToMany(mappedBy: 'catalogue', targetEntity: Burger::class)]
+    #[Groups("product:write")]
     private $burgers;
 
     #[ORM\OneToMany(mappedBy: 'catalogue', targetEntity: Menu::class)]
+    #[Groups("product:write")]
     private $menus;
 
     public function __construct()
@@ -52,6 +67,12 @@ class Catalogue
         return $this;
     }
 
+    public function setBurgers(ArrayCollection $burgers): self
+    {
+        $this->burgers = $burgers;
+        return $this;
+    }
+
     public function removeBurger(Burger $burger): self
     {
         if ($this->burgers->removeElement($burger)) {
@@ -79,6 +100,12 @@ class Catalogue
             $menu->setCatalogue($this);
         }
 
+        return $this;
+    }
+
+    public function setMenus(ArrayCollection $menus): self
+    {
+        $this->menus = $menus;
         return $this;
     }
 

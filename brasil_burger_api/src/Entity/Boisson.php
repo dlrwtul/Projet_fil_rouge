@@ -46,6 +46,9 @@ class Boisson extends Produit
     #[Groups(["boisson:read","boisson:write"])]
     private $tailles;
 
+    #[ORM\ManyToOne(targetEntity: Complement::class, inversedBy: 'boissons')]
+    private $complement;
+
 
     public function __construct()
     {
@@ -75,6 +78,18 @@ class Boisson extends Produit
         if ($this->tailles->removeElement($taille)) {
             $taille->removeBoisson($this);
         }
+
+        return $this;
+    }
+
+    public function getComplement(): ?Complement
+    {
+        return $this->complement;
+    }
+
+    public function setComplement(?Complement $complement): self
+    {
+        $this->complement = $complement;
 
         return $this;
     }

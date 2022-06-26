@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\ProduitRepository;
-use ApiPlatform\Core\Annotation\ApiResource;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -13,7 +12,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\DiscriminatorColumn(name: "type", type: "string")]
 #[ORM\DiscriminatorMap(["burger" => "Burger", "boisson" => "Boisson", "portion_frites" => "PortionFrites","menu" => "Menu"])]
 
-//#[ApiResource]
 class Produit
 {
     #[ORM\Id]
@@ -24,12 +22,12 @@ class Produit
 
     #[ORM\Column(type: 'string', length: 255,unique: true )]
     #[Assert\NotBlank(message:"Nom obligatoire")]
-    #[Groups("product:write")]
+    #[Groups(["product:write",'menu:self:update'])]
     private $nom;
 
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank(message:"Image obligatoire")]
-    #[Groups("product:write")]
+    #[Groups(["product:write",'menu:self:update'])]
     private $image;
 
     #[ORM\Column(type: 'float',nullable: true)]
