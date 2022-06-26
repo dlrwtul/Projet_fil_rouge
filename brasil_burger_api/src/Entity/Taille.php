@@ -39,16 +39,17 @@ class Taille
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    #[Groups(["taille:read","boisson:read","menu:read"])]
     private $id;
 
     #[ORM\Column(type: 'string', length: 255,unique:true)]
     #[Assert\NotBlank(message:"libelle obligatoire")]
-    #[Groups(["taille:write","boisson:read"])]
+    #[Groups(["taille:write","taille:read","boisson:read","menu:read"])]
     private $libelle;
 
     #[ORM\Column(type: 'float')]
     #[Assert\NotBlank(message:"prix obligatoire")]
-    #[Groups(["taille:write","boisson:read"])]
+    #[Groups(["taille:write","taille:read","boisson:read","menu:read"])]
     private $prix;
 
     #[ORM\ManyToMany(targetEntity: Boisson::class, inversedBy: 'tailles')]
@@ -56,6 +57,9 @@ class Taille
 
     #[ORM\ManyToOne(targetEntity: Complement::class, inversedBy: 'tailles')]
     private $complement;
+
+    #[ORM\ManyToOne(targetEntity: Menu::class, inversedBy: 'tailles')]
+    private $menu;
 
     public function __construct()
     {
@@ -123,6 +127,18 @@ class Taille
     public function setComplement(?Complement $complement): self
     {
         $this->complement = $complement;
+
+        return $this;
+    }
+
+    public function getMenu(): ?Menu
+    {
+        return $this->menu;
+    }
+
+    public function setMenu(?Menu $menu): self
+    {
+        $this->menu = $menu;
 
         return $this;
     }

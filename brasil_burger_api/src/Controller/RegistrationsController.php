@@ -67,7 +67,7 @@ class RegistrationsController extends AbstractController {
                         $user->setIsEtat(false);
 
                         $token = $JWTManager->create($user);
-
+                        $user->setConfirmPassword(null);
                         $userRepository->add($user,true);
 
                         $message = (new Email())

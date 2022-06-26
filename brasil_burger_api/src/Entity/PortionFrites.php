@@ -26,6 +26,9 @@ class PortionFrites extends Produit
     #[ORM\ManyToOne(targetEntity: Complement::class, inversedBy: 'portionFrites')]
     private $complement;
 
+    #[ORM\ManyToOne(targetEntity: Menu::class, inversedBy: 'portionfrites')]
+    private $menu;
+
     public function getComplement(): ?Complement
     {
         return $this->complement;
@@ -34,6 +37,18 @@ class PortionFrites extends Produit
     public function setComplement(?Complement $complement): self
     {
         $this->complement = $complement;
+
+        return $this;
+    }
+
+    public function getMenu(): ?Menu
+    {
+        return $this->menu;
+    }
+
+    public function setMenu(?Menu $menu): self
+    {
+        $this->menu = $menu;
 
         return $this;
     }

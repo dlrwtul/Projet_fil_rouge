@@ -24,20 +24,23 @@ class UserDataPersister implements DataPersisterInterface {
 
     public function persist($data, array $context = [])
     {
+
+        dd($data);
         // call your persistence layer to save $data
-        if($data->getPassword() == $data->getConfirmPassword()) {
-            $hashed = $this->hasher->hashPassword($data,$data->getPassword());
-            $data->setPassword($hashed);
-            $data->setIsEtat(true);
-            dd($data);
-            $this->entityManager->persist($data);
-            $this->entityManager->flush();
-            return $data;
+        // if($data->getPassword() == $data->getConfirmPassword()) {
+        //     $hashed = $this->hasher->hashPassword($data,$data->getPassword());
+        //     $data->setPassword($hashed);
+        //     $data->setIsEtat(true);
+        //     dd($data);
+        //     $this->entityManager->persist($data);
+        //     $this->entityManager->flush();
+        //     return $data;
 
-        } else {
-            dd("error: password");
-        }
-
+        // } else {
+        //     dd("error: password");
+        // }
+        $this->entityManager->persist($data);
+        $this->entityManager->flush();
         return $data;
         
     }
