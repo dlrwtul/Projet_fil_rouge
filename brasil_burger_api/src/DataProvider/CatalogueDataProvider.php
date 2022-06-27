@@ -2,7 +2,6 @@
 
 namespace App\DataProvider;
 
-use App\Entity\Burger;
 use App\Entity\Catalogue;
 use App\Repository\BurgerRepository;
 use ApiPlatform\Core\DataProvider\ItemDataProviderInterface;

@@ -18,7 +18,7 @@ use Symfony\Component\Validator\Constraints\Unique;
 #[ApiResource(
     attributes: ["security" => "is_granted('ROLE_GESTIONNAIRE')"],
     denormalizationContext: ['groups' => ['taille:write']],
-    normalizationContext: ['groups' => ['taille:write']],
+    normalizationContext: ['groups' => ['taille:read']],
     /* subresourceOperations: [
         'api_boissons_taille_get_subresource' => [
             'method' => 'GET',
@@ -27,6 +27,7 @@ use Symfony\Component\Validator\Constraints\Unique;
     ], */
     collectionOperations: [
         'post',
+        'get'
     ],
     itemOperations: [
         'get',
@@ -53,6 +54,7 @@ class Taille
     private $prix;
 
     #[ORM\ManyToMany(targetEntity: Boisson::class, inversedBy: 'tailles')]
+    #[Groups(["taille:read"])]
     private $boissons;
 
     #[ORM\ManyToOne(targetEntity: Complement::class, inversedBy: 'tailles')]
@@ -61,9 +63,13 @@ class Taille
     #[ORM\ManyToOne(targetEntity: Menu::class, inversedBy: 'tailles')]
     private $menu;
 
+    #[ORM\Column(type: 'boolean', nullable: true)]
+    private $isEtat;
+
     public function __construct()
     {
         $this->boissons = new ArrayCollection();
+        $this->isEtat = true;
     }
 
     public function getId(): ?int
@@ -139,6 +145,18 @@ class Taille
     public function setMenu(?Menu $menu): self
     {
         $this->menu = $menu;
+
+        return $this;
+    }
+
+    public function isIsEtat(): ?bool
+    {
+        return $this->isEtat;
+    }
+
+    public function setIsEtat(?bool $isEtat): self
+    {
+        $this->isEtat = $isEtat;
 
         return $this;
     }
