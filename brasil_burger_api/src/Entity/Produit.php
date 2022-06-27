@@ -17,29 +17,38 @@ class Produit
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Groups("product:read")]
+    #[Groups("product:read","taille:read")]
     protected $id;
 
     #[ORM\Column(type: 'string', length: 255,unique: true )]
     #[Assert\NotBlank(message:"Nom obligatoire")]
-    #[Groups(["product:write",'menu:self:update'])]
+    #[Groups(["product:write",'menu:self:update',"taille:read"])]
     private $nom;
 
-    #[ORM\Column(type: 'string', length: 255)]
+    /* #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank(message:"Image obligatoire")]
     #[Groups(["product:write",'menu:self:update'])]
+    private $image; */
+
+    #[ORM\Column(type: 'blob')]
+    #[Assert\NotBlank(message:"Image obligatoire")]
+    #[Groups(["product:write",'menu:self:update',"taille:read"])]
     private $image;
 
     #[ORM\Column(type: 'float',nullable: true)]
     #[Assert\Positive(message:"prix superieure a 0")]
-    #[Groups("product:write")]
+    #[Groups("product:write","taille:read")]
     private $prix;
 
     #[ORM\Column(type: 'boolean')]
-    private $isEtat = true;
+    private $isEtat ;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'produits')]
     private $user;
+
+    public function __construct() {
+        $this->isEtat = true;
+    }
 
     public function getId(): ?int
     {
@@ -58,7 +67,19 @@ class Produit
         return $this;
     }
 
-    public function getImage(): ?string
+    public function getImage()
+    {
+        return is_resource($this->image) ? stream_get_contents($this->image) : $this->image;
+    }
+
+    public function setImage($image): self
+    {
+        $this->image = $image;
+
+        return $this;
+    }
+
+    /* public function getImage(): ?string
     {
         return $this->image;
     }
@@ -69,7 +90,7 @@ class Produit
 
         return $this;
     }
-
+ */
     public function getPrix(): ?float
     {
         return $this->prix;
@@ -105,4 +126,5 @@ class Produit
 
         return $this;
     }
+
 }
