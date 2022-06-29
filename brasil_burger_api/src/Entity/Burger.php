@@ -18,7 +18,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
     denormalizationContext: ['groups' => ['product:write']],
     normalizationContext: ['groups' => ['product:write','product:read']],
     collectionOperations: [
-        'post',
+        'post' => [
+            'input_formats' => [
+                'multipart' => ['multipart/form-data'],
+            ],
+        ],
     ],
     itemOperations: [
         'get',
@@ -31,9 +35,6 @@ class Burger extends Produit
 {
     #[ORM\ManyToMany(targetEntity: Menu::class, mappedBy: 'burgers')]
     private $menus;
-
-    #[ORM\ManyToOne(targetEntity: Catalogue::class, inversedBy: 'burgers')]
-    private $catalogue;
 
     public function __construct()
     {
@@ -67,15 +68,4 @@ class Burger extends Produit
         return $this;
     }
 
-    public function getCatalogue(): ?Catalogue
-    {
-        return $this->catalogue;
-    }
-
-    public function setCatalogue(?Catalogue $catalogue): self
-    {
-        $this->catalogue = $catalogue;
-
-        return $this;
-    }
 }

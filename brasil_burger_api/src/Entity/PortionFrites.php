@@ -23,23 +23,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 class PortionFrites extends Produit
 {
-    #[ORM\ManyToOne(targetEntity: Complement::class, inversedBy: 'portionFrites')]
-    private $complement;
-
     #[ORM\ManyToOne(targetEntity: Menu::class, inversedBy: 'portionfrites')]
     private $menu;
-
-    public function getComplement(): ?Complement
-    {
-        return $this->complement;
-    }
-
-    public function setComplement(?Complement $complement): self
-    {
-        $this->complement = $complement;
-
-        return $this;
-    }
 
     public function getMenu(): ?Menu
     {

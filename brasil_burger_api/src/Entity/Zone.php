@@ -18,7 +18,7 @@ use Symfony\Component\Validator\Constraints\Unique;
     normalizationContext: ['groups' => ['zone:read']],
     collectionOperations: [
         'post',
-        'get',
+        'get' => ["security" => "is_granted('ROLE_VISITER')"],
     ],
     itemOperations: [
         'get',
@@ -36,13 +36,13 @@ class Zone
 
     #[ORM\Column(type: 'string', length: 255,unique: true)]
     #[Assert\NotBlank(message:"nom de zone obligatoire")]
-    #[Groups(["zone:read","zone:write"])]
+    #[Groups(["zone:read","zone:write","commande:read"])]
     private $libelle;
 
     #[ORM\Column(type: 'float')]
     #[Assert\NotBlank(message:"nom de zone obligatoire")]
     #[Assert\NotNull(message:"Enter Valid Price")]
-    #[Groups(["zone:read","zone:write"])]
+    #[Groups(["zone:read","zone:write","commande:read"])]
     private $montantLivraison;
 
     #[ORM\Column(type: 'boolean')]
@@ -52,11 +52,15 @@ class Zone
     #[Groups(["zone:read","zone:write"])]
     private $quartiers;
 
+    #[ORM\OneToMany(mappedBy: 'zone', targetEntity: Commande::class)]
+    private $commandes;
+
 
     public function __construct()
     {
         $this->isEtat = true;
         $this->quartiers = new ArrayCollection();
+        $this->commandes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -126,6 +130,36 @@ class Zone
     public function setMontantLivraison(float $montantLivraison): self
     {
         $this->montantLivraison = $montantLivraison;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Commande>
+     */
+    public function getCommandes(): Collection
+    {
+        return $this->commandes;
+    }
+
+    public function addCommande(Commande $commande): self
+    {
+        if (!$this->commandes->contains($commande)) {
+            $this->commandes[] = $commande;
+            $commande->setZone($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommande(Commande $commande): self
+    {
+        if ($this->commandes->removeElement($commande)) {
+            // set the owning side to null (unless already changed)
+            if ($commande->getZone() === $this) {
+                $commande->setZone(null);
+            }
+        }
 
         return $this;
     }

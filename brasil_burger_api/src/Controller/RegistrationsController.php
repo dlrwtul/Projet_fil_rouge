@@ -5,24 +5,19 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Entity\Client;
 use App\Entity\Livreur;
-use Symfony\Component\Mime\Email;
+use App\Service\MailerService;
 use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class RegistrationsController extends AbstractController {
 
-    static $EmailFrom = "6fa8f10b12-eda015@inbox.mailtrap.io";
 
     public function __invoke
     (
@@ -31,9 +26,8 @@ class RegistrationsController extends AbstractController {
         UserPasswordHasherInterface $hasher,
         ValidatorInterface $validator,
         UserRepository $userRepository,
-        MailerInterface $mailer,
-        TokenStorageInterface $tokenStorage,
-        JWTTokenManagerInterface $JWTManager
+        JWTTokenManagerInterface $JWTManager,
+        MailerService $mailer
     ) : Response
     {
 
@@ -59,25 +53,18 @@ class RegistrationsController extends AbstractController {
 
                 $check = $userRepository->findOneBy(array('login' => $user->getLogin()));
                 if (null == $check) {
+                    if($user->getPlanPassword() == $user->getConfirmPassword()) {
 
-                    if($user->getPassword() == $user->getConfirmPassword()) {
-
-                        $hashed = $hasher->hashPassword($user,$user->getPassword());
+                        $hashed = $hasher->hashPassword($user,$user->getPlanPassword());
                         $user->setPassword($hashed);
                         $user->setIsEtat(false);
-
-                        $token = $JWTManager->create($user);
-                        $user->setConfirmPassword(null);
+                        $user->eraseCredentials();
+                        //$token = $JWTManager->create($user);
+                        $token = $user->getToken();
                         $userRepository->add($user,true);
 
-                        $message = (new Email())
-                                    ->from(self::$EmailFrom)
-                                    ->to($user->getLogin())
-                                    ->subject('Email address confirmation')
-                                    ->text(sprintf('Confirm your mail adresse ,and enjoy.'."http://127.0.0.1:8000/api/verify_mail/{$token}"));
-                        $mailer->send($message);
-
-    
+                        $mailer->sendMail($user->getUserIdentifier(),$token);
+                    
                         return $this->json("veuiller Confirmer votre email", 200);
     
                     } else {
@@ -92,9 +79,6 @@ class RegistrationsController extends AbstractController {
                 }
                 
             } else {
-                /* foreach ($errors as $error) {
-                    $jsonErrors[] = $error->getMessage();
-                } */
                 return $this->json($errors,400);
             }
             
@@ -109,8 +93,8 @@ class RegistrationsController extends AbstractController {
         }
     }
 
-    #[Route(path:'api/verify_mail/{token}',name:'app_verify_mail', methods:['GET'])]
-    public function verifyUserEmail(Request $request,JWTTokenManagerInterface $JWTManager,UserRepository $userRepository,String $token): Response
+    //#[Route(path:'api/verify_mail/{token}',name:'app_verify_mail', methods:['GET'])]
+    /* public function verifyUserEmail(Request $request,UserRepository $userRepository,String $token): Response
     {
         $tokenParts = explode(".", $token);  
         //$tokenHeader = base64_decode($tokenParts[0]);
@@ -130,5 +114,5 @@ class RegistrationsController extends AbstractController {
 
             return $this->json("Your token is invalid",400);
         }
-    }
+    } */
 }
