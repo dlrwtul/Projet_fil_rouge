@@ -24,7 +24,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     itemOperations: [
         'get',
         'put' => [
-            'denormalization_context' => [ 'groups' => ['menu:write'] ],
+            'controller' => MenuController::class,
         ],
         'delete'
     ]
@@ -35,9 +35,6 @@ class Menu extends Produit
     #[ORM\ManyToMany(targetEntity: Burger::class, inversedBy: 'menus')]
     #[Groups(["menu:read","menu:write"])]
     private $burgers;
-
-    #[ORM\ManyToOne(targetEntity: Catalogue::class, inversedBy: 'menus')]
-    private $catalogue;
 
     #[ORM\OneToMany(mappedBy: 'menu', targetEntity: Taille::class)]
     #[Groups(["menu:read","menu:write"])]
@@ -74,18 +71,6 @@ class Menu extends Produit
     public function removeBurger(Burger $burger): self
     {
         $this->burgers->removeElement($burger);
-
-        return $this;
-    }
-
-    public function getCatalogue(): ?Catalogue
-    {
-        return $this->catalogue;
-    }
-
-    public function setCatalogue(?Catalogue $catalogue): self
-    {
-        $this->catalogue = $catalogue;
 
         return $this;
     }

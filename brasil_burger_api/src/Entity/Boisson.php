@@ -19,7 +19,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiResource(
     attributes: ["security" => "is_granted('ROLE_GESTIONNAIRE')"],
     denormalizationContext: ['groups' => ['product:write']],
-    normalizationContext: ['groups' => ['product:write','product:read','boisson:read']],
+    normalizationContext: ['groups' => ['boisson:read',"product:read"]],
     /* subresourceOperations: [
         'api_boissons_taille_get_subresource' => [
             'method' => 'GET',
@@ -33,7 +33,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     itemOperations: [
         'get',
         'put' => [
-            'denormalization_context' => [ 'groups' => ['product:write','boisson:write'] ],
+            'controller' => BoissonController::class,
         ],
         'delete'
     ]
@@ -45,9 +45,6 @@ class Boisson extends Produit
     #[Assert\NotNull(message:"veuillez choisir des tailles obligatoire")]
     #[Groups(["boisson:read","boisson:write"])]
     private $tailles;
-
-    #[ORM\ManyToOne(targetEntity: Complement::class, inversedBy: 'boissons')]
-    private $complement;
 
 
     public function __construct()
@@ -82,15 +79,4 @@ class Boisson extends Produit
         return $this;
     }
 
-    public function getComplement(): ?Complement
-    {
-        return $this->complement;
-    }
-
-    public function setComplement(?Complement $complement): self
-    {
-        $this->complement = $complement;
-
-        return $this;
-    }
 }

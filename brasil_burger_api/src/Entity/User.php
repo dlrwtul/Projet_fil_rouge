@@ -2,15 +2,17 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\UserRepository;
+use App\Controller\VerifyEmailAction;
 use App\Controller\RegistrationsController;
+use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
@@ -21,9 +23,16 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
         'get',
         'registration' => [
             'method' => 'POST',
-            'path' => '/register',
+            'path' => '/users/register',
             'controller' => RegistrationsController::class,
+        ],
+        'verify_mail' => [
+            'method' => 'PATCH',
+            'path' => '/users/{token}/activate',
+            'controller' => VerifyEmailAction::class,
+            'deserialize' =>false,
         ]
+
     ],
     itemOperations:[
         'get',
@@ -48,31 +57,28 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 180, unique: true)]
     #[Assert\NotBlank(message:"login is required")]
     #[Assert\Email(message:"Enter an email address")]
-    #[Groups(["user:write","user:read"])]
+    #[Groups(["user:write","user:read","commande:read"])]
     protected $login;
 
     #[ORM\Column(type: 'json')]
     protected $roles = [];
 
     #[ORM\Column(type: 'string')]
-    #[Assert\NotBlank(message:"password is required")]
-    #[Groups("user:write")]
     protected $password;
 
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank(message:"nom is required")]
-    #[Groups(["user:write","user:read","user:update"])]
+    #[Groups(["user:write","user:read","user:update","commande:read"])]
     protected $nom;
 
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank(message:"prenom is required")]
-    #[Groups(["user:write","user:read","user:update"])]
+    #[Groups(["user:write","user:read","user:update","commande:read"])]
     protected $prenom;
 
     #[ORM\Column(type: 'boolean')]
     protected $isEtat;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     #[Assert\NotBlank(message:"password confirm is required")]
     #[Groups("user:write")]
     protected $confirmPassword;
@@ -81,13 +87,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $produits;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Groups("user:telephone")]
+    #[Groups("user:telephone","commande:read")]
     private $telephone;
+
+    #[Assert\NotBlank(message:"password is required")]
+    #[Groups("user:write")]
+    #[SerializedName("password")]
+    private $planPassword;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private $token;
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private $expireAt;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Commande::class)]
+    private $commandes;
+
 
     public function __construct()
     {
         $this->produits = new ArrayCollection();
         $this->roles = array("ROLE_GESTIONNAIRE");
+        $this->isEtat = false;
+        $this->generateToken();
+        $this->commandes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -157,7 +181,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials()
     {
         // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
+        $this->planPassword = null;
+        $this->confirmPassword = null;
     }
 
     public function getNom(): ?string
@@ -198,7 +223,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getConfirmPassword(): ?string
     {
-        return null;
+        return $this->confirmPassword;
     }
 
     public function setConfirmPassword(?string $confirmPassword): self
@@ -247,6 +272,80 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setTelephone(?string $telephone): self
     {
         $this->telephone = $telephone;
+
+        return $this;
+    }
+
+    public function getPlanPassword(): ?string
+    {
+        return $this->planPassword;
+    }
+
+    public function setPlanPassword(?string $planPassword): self
+    {
+        $this->planPassword = $planPassword;
+
+        return $this;
+    }
+
+    public function getToken(): ?string
+    {
+        return $this->token;
+    }
+
+    public function setToken(?string $token): self
+    {
+        $this->token = $token;
+
+        return $this;
+    }
+
+    public function generateToken() 
+    {
+        $token = openssl_random_pseudo_bytes(32);
+        $token = bin2hex($token);
+        $this->token = $token;
+        $this->expireAt = new \DateTime(" + 1 days");
+    }
+
+    public function getExpireAt(): ?\DateTimeInterface
+    {
+        return $this->expireAt;
+    }
+
+    public function setExpireAt(?\DateTimeInterface $expireAt): self
+    {
+        $this->expireAt = $expireAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Commande>
+     */
+    public function getCommandes(): Collection
+    {
+        return $this->commandes;
+    }
+
+    public function addCommande(Commande $commande): self
+    {
+        if (!$this->commandes->contains($commande)) {
+            $this->commandes[] = $commande;
+            $commande->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommande(Commande $commande): self
+    {
+        if ($this->commandes->removeElement($commande)) {
+            // set the owning side to null (unless already changed)
+            if ($commande->getUser() === $this) {
+                $commande->setUser(null);
+            }
+        }
 
         return $this;
     }

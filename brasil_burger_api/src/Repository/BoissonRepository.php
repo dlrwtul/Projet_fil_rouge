@@ -63,4 +63,15 @@ class BoissonRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+
+    public function findOneByBoissonTaille(int $idBoisson,int $idTaille){
+        return $this->createQueryBuilder('b')
+                    ->join('App\Entity\Taille','t','WITH')
+                    ->andWhere('b.id = :val0')
+                    ->andWhere('t.id = :val')
+                    ->setParameter('val0',$idBoisson)
+                    ->setParameter('val',$idTaille)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+    }
 }

@@ -35,25 +35,18 @@ class BoissonController extends AbstractController
 
             $boisson = $denormalizer->denormalize($boissonArray,Boisson::class);
 
-            /* if ($request->getMethod() == 'PUT') {
+            if ($request->getMethod() == 'PUT') {
                 
                 $check = $boissonRepository->findOneBy(array('id' => $id));
-                if ($boisson->getNom() != null) {
-                    $check->setNom($boisson->getNom());
+
+                foreach ($check->getTailles() as $taille) {
+                    if (!in_array($taille->getId(),$boissonArray["tailles"])) {
+                        $check->removeTaille($taille);
+                    }
                 }
-
-                if ($boisson->getImage() != null) {
-                    $check->setImage($boisson->getImage());
-                }
-
-                $tailles = $check->getTailles();
-
-                foreach ( $tailles as $value) {
-                    $check->removeTaille($value);
-                }
-
                 $boisson = $check;
-            } */
+
+            }
 
             if ($request->getMethod() == 'POST') {
 
@@ -64,6 +57,9 @@ class BoissonController extends AbstractController
                     return $this->json(["status" => 400,"message"=>"Boisson already in db"],400);
 
                 }
+
+                $user = $tokenStorage->getToken()->getUser();
+                $boisson->setUser($user);
             }
 
             foreach ($boissonArray["tailles"] as $idTaille) {
@@ -75,11 +71,9 @@ class BoissonController extends AbstractController
                 }
             }
 
-            $user = $tokenStorage->getToken()->getUser();
-            $boisson->setUser($user);
             $boissonRepository->add($boisson,true);
 
-            return $this->json($boisson, 201);
+            return $this->json($boisson, 201,[],['groups' => ['boisson:read','product:read']]);
 
         } catch (NotEncodableValueException $th) {
 

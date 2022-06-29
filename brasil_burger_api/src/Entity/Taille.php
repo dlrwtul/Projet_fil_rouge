@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Entity\Boisson;
-use App\Entity\Produit;
-use App\Entity\Complement;
 use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\TailleRepository;
@@ -12,19 +10,12 @@ use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Validator\Constraints\Unique;
 
 #[ORM\Entity(repositoryClass: TailleRepository::class)]
 #[ApiResource(
     attributes: ["security" => "is_granted('ROLE_GESTIONNAIRE')"],
     denormalizationContext: ['groups' => ['taille:write']],
-    normalizationContext: ['groups' => ['taille:read']],
-    /* subresourceOperations: [
-        'api_boissons_taille_get_subresource' => [
-            'method' => 'GET',
-            'normalization_context' => ['groups' => ['taille:write']],
-        ],
-    ], */
+    normalizationContext: ['groups' => ['taille:read',"product:read"]],
     collectionOperations: [
         'post',
         'get'
@@ -56,9 +47,6 @@ class Taille
     #[ORM\ManyToMany(targetEntity: Boisson::class, inversedBy: 'tailles')]
     #[Groups(["taille:read"])]
     private $boissons;
-
-    #[ORM\ManyToOne(targetEntity: Complement::class, inversedBy: 'tailles')]
-    private $complement;
 
     #[ORM\ManyToOne(targetEntity: Menu::class, inversedBy: 'tailles')]
     private $menu;
@@ -121,18 +109,6 @@ class Taille
     public function removeBoisson(Boisson $boisson): self
     {
         $this->boissons->removeElement($boisson);
-
-        return $this;
-    }
-
-    public function getComplement(): ?Complement
-    {
-        return $this->complement;
-    }
-
-    public function setComplement(?Complement $complement): self
-    {
-        $this->complement = $complement;
 
         return $this;
     }
