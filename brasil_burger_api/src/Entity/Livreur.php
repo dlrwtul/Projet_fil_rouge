@@ -8,6 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Repository\LivreurRepository;
 use App\Controller\RegistrationsController;
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Service\EtatService;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -29,11 +30,14 @@ use Symfony\Component\Validator\Constraints as Assert;
         'put' => [
             'denormalization_context' => ['groups' => ["user:update","livreur:write","user:telephone"]]
         ]
-    ]
+    ],
 )]
 
 class Livreur extends User
 {
+    #[Groups("livraison:write")]
+    protected $id;
+    
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank(message:"matricule moto is required")]
     #[Groups(["livreur:write","livreur:read"])]
@@ -41,6 +45,9 @@ class Livreur extends User
 
     #[ORM\OneToMany(mappedBy: 'livreur', targetEntity: Livraison::class)]
     private $livraisons;
+
+    #[ORM\Column(type: 'string', length: 255)]
+    private $etat = EtatService::ETAT_DISPONIBLE;
 
     public function __construct() {
         $this->roles = array("ROLE_LIVREUR");
@@ -85,6 +92,18 @@ class Livreur extends User
                 $livraison->setLivreur(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getEtat(): ?string
+    {
+        return $this->etat;
+    }
+
+    public function setEtat(string $etat): self
+    {
+        $this->etat = $etat;
 
         return $this;
     }

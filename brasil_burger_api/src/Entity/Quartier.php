@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\QuartierRepository;
 use ApiPlatform\Core\Annotation\ApiResource;
@@ -29,7 +31,7 @@ class Quartier
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Groups(["quartier:read","quartier:read","zone:read"])]
+    #[Groups(["quartier:read","quartier:read","zone:read","commande:write"])]
     private $id;
 
     #[ORM\Column(type: 'string', length: 255,unique: true)]
@@ -43,8 +45,12 @@ class Quartier
     #[ORM\ManyToOne(targetEntity: Zone::class, inversedBy: 'quartiers')]
     private $zone;
 
+    #[ORM\OneToMany(mappedBy: 'quartier', targetEntity: Commande::class)]
+    private $commandes;
+
     public function __construct() {
         $this->isEtat = true;
+        $this->commandes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -84,6 +90,36 @@ class Quartier
     public function setZone(?Zone $zone): self
     {
         $this->zone = $zone;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Commande>
+     */
+    public function getCommandes(): Collection
+    {
+        return $this->commandes;
+    }
+
+    public function addCommande(Commande $commande): self
+    {
+        if (!$this->commandes->contains($commande)) {
+            $this->commandes[] = $commande;
+            $commande->setQuartier($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommande(Commande $commande): self
+    {
+        if ($this->commandes->removeElement($commande)) {
+            // set the owning side to null (unless already changed)
+            if ($commande->getQuartier() === $this) {
+                $commande->setQuartier(null);
+            }
+        }
 
         return $this;
     }

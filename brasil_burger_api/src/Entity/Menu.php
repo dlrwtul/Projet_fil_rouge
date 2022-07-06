@@ -2,29 +2,44 @@
 
 namespace App\Entity;
 
+use App\Validator\MenuValidator;
 use Doctrine\ORM\Mapping as ORM;
-use App\Controller\MenuController;
 use App\Repository\MenuRepository;
+use App\Controller\EditProduitAction;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Core\Annotation\ApiSubresource;
+use Symfony\Component\HttpFoundation\File\File;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: MenuRepository::class)]
+#[Assert\Callback([MenuValidator::class, 'validate'])]
+#[UniqueEntity('nom')]
 #[ApiResource(
+    //input: MenuInput::class,
+    //output: DtoMenuOutput::class,
     attributes: ["security" => "is_granted('ROLE_GESTIONNAIRE')"],
-    denormalizationContext: ['groups' => ['product:write']],
-    normalizationContext: ['groups' => ['product:write','product:read','menu:read']],
+    denormalizationContext: ['groups' => ['menu:write']],
+    normalizationContext: ['groups' => ['menu:read',"product:read"]],
     collectionOperations: [
-        'post' => [
-            'controller' => MenuController::class,
+        'post' => [           
+            'input_formats' => [
+                'multipart' => ['multipart/form-data'],
+            ],
         ],
+        'get'
     ],
     itemOperations: [
-        'get',
+        'get' => ["security" => "is_granted('ROLE_VISITER')"],
         'put' => [
-            'controller' => MenuController::class,
+            'method' => 'POST',
+            'controller' => EditProduitAction::class,
+            'input_formats' => [
+                'multipart' => ['multipart/form-data'],
+            ],
         ],
         'delete'
     ]
@@ -32,73 +47,79 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class Menu extends Produit
 {
-    #[ORM\ManyToMany(targetEntity: Burger::class, inversedBy: 'menus')]
-    #[Groups(["menu:read","menu:write"])]
-    private $burgers;
+    #[Groups("commande:write","commande:read")]
+    protected $id;
 
-    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: Taille::class)]
-    #[Groups(["menu:read","menu:write"])]
-    private $tailles;
+    #[Groups(["menu:write","menu:read"])]
+    protected $nom;
 
-    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: PortionFrites::class)]
-    #[Groups(["menu:read","menu:write"])]
-    private $portionfrites;
+    #[Groups(["menu:write","menu:read"])]
+    protected ?File $file;
+
+    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: MenuBurger::class,cascade:['persist'])]
+    #[Groups(["menu:write","menu:read"])]
+    #[Assert\Count(min:1)]
+    #[Assert\Valid()]
+    #[ApiSubresource]
+    private $menuBurgers;
+
+    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: MenuTaille::class,cascade:['persist'])]
+    #[Groups(["menu:write","menu:read"])]
+    #[Assert\Valid()]
+    #[ApiSubresource]
+    private $menuTailles;
+
+    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: MenuPortionFrites::class,cascade:['persist'])]
+    #[Groups(["menu:write","menu:read"])]
+    #[Assert\Valid()]
+    #[ApiSubresource]
+    private $menuPortionFrites;
+
+    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: CommandeMenu::class)]
+    private $commandeMenus;
+
+    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: CommandeMenuBoissonTaille::class,cascade:["persist"])]
+    private $commandeMenuBoissonTailles;
+
+    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: CommandeBoissonTaille::class)]
+    #[Groups(["commande:write","commande:read"])]
+    private $commandeBoissonTaille;
 
     public function __construct()
     {
-        $this->burgers = new ArrayCollection();
-        $this->tailles = new ArrayCollection();
-        $this->portionfrites = new ArrayCollection();
+        parent::__construct();
+        $this->menuBurgers = new ArrayCollection();
+        $this->menuTailles = new ArrayCollection();
+        $this->menuPortionFrites = new ArrayCollection();
+        $this->commandeMenus = new ArrayCollection();
+        $this->commandeMenuBoissonTailles = new ArrayCollection();
+        $this->commandeBoissonTaille = new ArrayCollection();
     }
 
     /**
-     * @return Collection<int, Burger>
+     * @return Collection<int, MenuBurger>
      */
-    public function getBurgers(): Collection
+    public function getMenuBurgers(): Collection
     {
-        return $this->burgers;
+        return $this->menuBurgers;
     }
 
-    public function addBurger(Burger $burger): self
+    public function addMenuBurger(MenuBurger $menuBurger): self
     {
-        if (!$this->burgers->contains($burger)) {
-            $this->burgers[] = $burger;
+        if (!$this->menuBurgers->contains($menuBurger)) {
+            $this->menuBurgers[] = $menuBurger;
+            $menuBurger->setMenu($this);
         }
 
         return $this;
     }
 
-    public function removeBurger(Burger $burger): self
+    public function removeMenuBurger(MenuBurger $menuBurger): self
     {
-        $this->burgers->removeElement($burger);
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Taille>
-     */
-    public function getTailles(): Collection
-    {
-        return $this->tailles;
-    }
-
-    public function addTaille(Taille $taille): self
-    {
-        if (!$this->tailles->contains($taille)) {
-            $this->tailles[] = $taille;
-            $taille->setMenu($this);
-        }
-
-        return $this;
-    }
-
-    public function removeTaille(Taille $taille): self
-    {
-        if ($this->tailles->removeElement($taille)) {
+        if ($this->menuBurgers->removeElement($menuBurger)) {
             // set the owning side to null (unless already changed)
-            if ($taille->getMenu() === $this) {
-                $taille->setMenu(null);
+            if ($menuBurger->getMenu() === $this) {
+                $menuBurger->setMenu(null);
             }
         }
 
@@ -106,32 +127,153 @@ class Menu extends Produit
     }
 
     /**
-     * @return Collection<int, PortionFrites>
+     * @return Collection<int, MenuTaille>
      */
-    public function getPortionfrites(): Collection
+    public function getMenuTailles(): Collection
     {
-        return $this->portionfrites;
+        return $this->menuTailles;
     }
 
-    public function addPortionfrite(PortionFrites $portionfrite): self
+    public function addMenuTaille(MenuTaille $menuTaille): self
     {
-        if (!$this->portionfrites->contains($portionfrite)) {
-            $this->portionfrites[] = $portionfrite;
-            $portionfrite->setMenu($this);
+        if (!$this->menuTailles->contains($menuTaille)) {
+            $this->menuTailles[] = $menuTaille;
+            $menuTaille->setMenu($this);
         }
 
         return $this;
     }
 
-    public function removePortionfrite(PortionFrites $portionfrite): self
+    public function removeMenuTaille(MenuTaille $menuTaille): self
     {
-        if ($this->portionfrites->removeElement($portionfrite)) {
+        if ($this->menuTailles->removeElement($menuTaille)) {
             // set the owning side to null (unless already changed)
-            if ($portionfrite->getMenu() === $this) {
-                $portionfrite->setMenu(null);
+            if ($menuTaille->getMenu() === $this) {
+                $menuTaille->setMenu(null);
             }
         }
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, MenuPortionFrites>
+     */
+    public function getMenuPortionFrites(): Collection
+    {
+        return $this->menuPortionFrites;
+    }
+
+    public function addMenuPortionFrite(MenuPortionFrites $menuPortionFrite): self
+    {
+        if (!$this->menuPortionFrites->contains($menuPortionFrite)) {
+            $this->menuPortionFrites[] = $menuPortionFrite;
+            $menuPortionFrite->setMenu($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMenuPortionFrite(MenuPortionFrites $menuPortionFrite): self
+    {
+        if ($this->menuPortionFrites->removeElement($menuPortionFrite)) {
+            // set the owning side to null (unless already changed)
+            if ($menuPortionFrite->getMenu() === $this) {
+                $menuPortionFrite->setMenu(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CommandeMenu>
+     */
+    public function getCommandeMenus(): Collection
+    {
+        return $this->commandeMenus;
+    }
+
+    public function addCommandeMenu(CommandeMenu $commandeMenu): self
+    {
+        if (!$this->commandeMenus->contains($commandeMenu)) {
+            $this->commandeMenus[] = $commandeMenu;
+            $commandeMenu->setMenu($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommandeMenu(CommandeMenu $commandeMenu): self
+    {
+        if ($this->commandeMenus->removeElement($commandeMenu)) {
+            // set the owning side to null (unless already changed)
+            if ($commandeMenu->getMenu() === $this) {
+                $commandeMenu->setMenu(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CommandeMenuBoissonTaille>
+     */
+    public function getCommandeMenuBoissonTailles(): Collection
+    {
+        return $this->commandeMenuBoissonTailles;
+    }
+
+    public function addCommandeMenuBoissonTaille(CommandeMenuBoissonTaille $commandeMenuBoissonTaille): self
+    {
+        if (!$this->commandeMenuBoissonTailles->contains($commandeMenuBoissonTaille)) {
+            $this->commandeMenuBoissonTailles[] = $commandeMenuBoissonTaille;
+            $commandeMenuBoissonTaille->setMenu($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommandeMenuBoissonTaille(CommandeMenuBoissonTaille $commandeMenuBoissonTaille): self
+    {
+        if ($this->commandeMenuBoissonTailles->removeElement($commandeMenuBoissonTaille)) {
+            // set the owning side to null (unless already changed)
+            if ($commandeMenuBoissonTaille->getMenu() === $this) {
+                $commandeMenuBoissonTaille->setMenu(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CommandeBoissonTaille>
+     */
+    public function getCommandeBoissonTaille(): Collection
+    {
+        return $this->commandeBoissonTaille;
+    }
+
+    public function addCommandeBoissonTaille(CommandeBoissonTaille $commandeBoissonTaille): self
+    {
+        if (!$this->commandeBoissonTaille->contains($commandeBoissonTaille)) {
+            $this->commandeBoissonTaille[] = $commandeBoissonTaille;
+            $commandeBoissonTaille->setMenu($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommandeBoissonTaille(CommandeBoissonTaille $commandeBoissonTaille): self
+    {
+        if ($this->commandeBoissonTaille->removeElement($commandeBoissonTaille)) {
+            // set the owning side to null (unless already changed)
+            if ($commandeBoissonTaille->getMenu() === $this) {
+                $commandeBoissonTaille->setMenu(null);
+            }
+        }
+
+        return $this;
+    }
+
 }

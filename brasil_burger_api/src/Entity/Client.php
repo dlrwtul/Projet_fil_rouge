@@ -33,10 +33,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class Client extends User
 {
+    #[Groups(["commande:write"])]
+    protected $id;
 
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank(message:"adresse is required")]
-    #[Groups(["client:write","client:read","commande:read"])]
+    #[Groups(["client:write","client:read","commande:read","livraison:read"])]
     private $adresse;
 
     #[ORM\OneToMany(mappedBy: 'client', targetEntity: Commande::class)]
@@ -88,4 +90,5 @@ class Client extends User
 
         return $this;
     }
+
 }

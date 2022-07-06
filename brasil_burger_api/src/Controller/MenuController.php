@@ -8,7 +8,6 @@ use App\Repository\BurgerRepository;
 use App\Repository\TailleRepository;
 use App\Repository\PortionFritesRepository;
 use Symfony\Component\HttpFoundation\Request;
-use Doctrine\ORM\Repository\RepositoryFactory;
 use Symfony\Component\Serializer\Encoder\DecoderInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;

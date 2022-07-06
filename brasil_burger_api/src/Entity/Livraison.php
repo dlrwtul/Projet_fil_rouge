@@ -2,27 +2,57 @@
 
 namespace App\Entity;
 
-use App\Repository\LivraisonRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use App\Service\EtatService;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\LivraisonRepository;
+use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Core\Annotation\ApiSubresource;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: LivraisonRepository::class)]
+#[ApiResource(
+    denormalizationContext: ['groups' => ['livraison:write']],
+    normalizationContext: ['groups' => ['livraison:read']],
+    collectionOperations: [
+        'post' => [
+            "security_post_denormalize" => "is_granted('ALL', object)"
+        ],
+        'get' //=>[ "security" => "is_granted('READ', object)"],
+    ],
+    itemOperations: [
+        'get' => [ "security" => "is_granted('ALL', object)"],
+        'delete' =>[ "security" => "is_granted('ALL', object)"],
+        'put' =>[ "security" => "is_granted('ALL', object)"],
+    ]
+)]
 class Livraison
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    #[Groups(["livraison:read"])]
     private $id;
 
     #[ORM\Column(type: 'float')]
+    #[Groups(["livraison:read"])]
     private $montantTotal;
 
     #[ORM\ManyToOne(targetEntity: Livreur::class, inversedBy: 'livraisons')]
+    #[Groups(["livraison:read","livraison:write"])]
     private $livreur;
 
     #[ORM\OneToMany(mappedBy: 'livraison', targetEntity: Commande::class)]
+    #[Groups(["livraison:read","livraison:write"])]
+    #[ApiSubresource]
     private $commandes;
+
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'livraisons')]
+    private $user;
+
+    #[ORM\Column(type: 'string', length: 255)]
+    private $etat = EtatService::ETAT_EN_COURS;
 
     public function __construct()
     {
@@ -54,6 +84,7 @@ class Livraison
     public function setLivreur(?Livreur $livreur): self
     {
         $this->livreur = $livreur;
+        $livreur->setEtat(EtatService::ETAT_INDISPONIBLE);
 
         return $this;
     }
@@ -79,10 +110,36 @@ class Livraison
     public function removeCommande(Commande $commande): self
     {
         if ($this->commandes->removeElement($commande)) {
-            // set the owning side to null (unless already changed)
             if ($commande->getLivraison() === $this) {
                 $commande->setLivraison(null);
             }
+        }
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    public function getEtat(): ?string
+    {
+        return $this->etat;
+    }
+
+    public function setEtat(string $etat): self
+    {
+        $this->etat = $etat;
+        if ($etat == EtatService::ETAT_VALIDE) {
+            $this->getLivreur()->setEtat(EtatService::ETAT_DISPONIBLE);
         }
 
         return $this;

@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Repository\ComplementRepository;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Core\Annotation\ApiSubresource;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -26,9 +27,11 @@ class Complement
     private $id;
 
     #[Groups("product:write")]
+    #[ApiSubresource]
     private $portionFrites;
 
     #[Groups("product:write")]
+    #[ApiSubresource]
     private $boissons;
 
     public function __construct(?int $id)

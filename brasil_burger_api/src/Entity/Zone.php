@@ -6,10 +6,11 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Repository\ZoneRepository;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Core\Annotation\ApiSubresource;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\Unique;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ZoneRepository::class)]
 #[ApiResource(
@@ -31,7 +32,7 @@ class Zone
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Groups(["zone:read"])]
+    #[Groups(["zone:read","commande:write"])]
     private $id;
 
     #[ORM\Column(type: 'string', length: 255,unique: true)]
@@ -49,7 +50,8 @@ class Zone
     private $isEtat;
 
     #[ORM\OneToMany(mappedBy: 'zone', targetEntity: Quartier::class)]
-    #[Groups(["zone:read","zone:write"])]
+    //#[Groups(["zone:read","zone:write","commande:write"])]
+    #[ApiSubresource]
     private $quartiers;
 
     #[ORM\OneToMany(mappedBy: 'zone', targetEntity: Commande::class)]
