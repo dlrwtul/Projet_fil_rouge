@@ -2,19 +2,23 @@
 
 namespace App\Controller;
 
+use App\Entity\BoissonTaille;
 use App\Entity\Commande;
 use App\Repository\MenuRepository;
+use App\Repository\ZoneRepository;
 use App\Repository\BurgerRepository;
+use App\Entity\CommandeBoissonTaille;
 use App\Repository\BoissonRepository;
 use App\Repository\CommandeRepository;
+use App\Repository\QuartierRepository;
+use App\Repository\BoissonTailleRepository;
+use App\Repository\CommandeBoissonTailleRepository;
 use App\Repository\PortionFritesRepository;
-use App\Repository\TailleRepository;
-use App\Repository\ZoneRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\Encoder\DecoderInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
-use Symfony\Component\Serializer\Normalizer\DenormalizableInterface;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
@@ -29,10 +33,12 @@ class CommandeAction extends AbstractController {
         CommandeRepository $commandeRepository,
         MenuRepository $menuRepository,
         BurgerRepository $burgerRepository,
-        BoissonRepository $boissonRepository,
         PortionFritesRepository $portionFritesRepository,
-        TailleRepository $tailleRepository,
-        ZoneRepository $zoneRepository
+        BoissonTailleRepository $boissonTailleRepository,
+        ZoneRepository $zoneRepository,
+        QuartierRepository $quartierRepository,
+        ValidatorInterface $validatorInterface,
+        CommandeBoissonTailleRepository $commandeBoissonTailleRepository,
     )
     {
         try {
@@ -41,19 +47,20 @@ class CommandeAction extends AbstractController {
             
             $dataArray = $decoder->decode($json,'json');
 
+
+            $zone = $zoneRepository->findOneBy(array('id' => $dataArray['zone']["id"]));
+            $quartier = $quartierRepository->findOneBy(array('id' => $dataArray['zone']["quartier"]));
+
+            unset($dataArray['zone']);
+
             $data = $denormalizer->denormalize($dataArray,Commande::class);
+
+            $data->setZone($zone);
+            $data->setAdresseLivraison($zone->getLibelle()." ".$quartier->getLibelle());
 
             $user = $tokenStorage->getToken()->getUser();
             $data->setClient($user);
 
-            $zone = $zoneRepository->findOneBy(array('id' => $dataArray['zone']));
-
-            if (!null == $zone) {
-                $data->setZone($zone);
-            }else {
-                return $this->json(["status" => 400,"message"=>"Veuillez entrer une zone valide"],400);
-            }
-            
             $produits = $dataArray["produits"];
 
             $menus = $produits["menus"];
@@ -65,21 +72,28 @@ class CommandeAction extends AbstractController {
             $frites = $produits["frites"];
 
             $prix = 0;
-            
-            foreach ($boissons as $boisson) {
-
-                $object = $boissonRepository->findOneByBoissonTaille($boisson['id'],$boisson['taille']);
-                $taille = $tailleRepository->findOneBy(array('id' => $boisson["taille"]));
-                $prix +=$taille->getPrix();
-                if (!null == $object) {
-                    $data->addCommandeProduit($object,$boisson["quantite"]);
-                }
-                
-            }
 
             $this->addProduit($menuRepository,$menus,$data,$prix);
             $this->addProduit($burgerRepository,$burgers,$data,$prix);
             $this->addProduit($portionFritesRepository,$frites,$data,$prix);
+
+            foreach ($boissons as $boisson) {
+
+                $object = $boissonTailleRepository->findOneByBoissonTaille($boisson['id'],$boisson['taille']);
+                $prix +=$object->getPrix();
+                if (!null == $object) {
+                    $check = $commandeBoissonTailleRepository->findOneCommandeBoissonTailleBy( $object->getId());
+                    if ($check == null) {
+                        $commandeBoissonTaille = new CommandeBoissonTaille($object,$boisson['quantite']);
+                        $data->addCommandeBoissonTaille($commandeBoissonTaille);
+                    } else {
+                        $check->setQuantite($check->getQuantite() + $boisson['quantite']);
+                        $commandeBoissonTailleRepository->add($check,true);
+                    }
+                    
+                }
+                
+            }
             
             $data->setMontant($prix);
 
@@ -87,6 +101,9 @@ class CommandeAction extends AbstractController {
 
             $data->setNumero($data->generateNumero($count));
 
+            dd($data);
+
+            $errors = $validatorInterface->validate($data);
             $commandeRepository->add($data,true);
 
             return $this->json($data, 201,[],['groups' => ['commande:read']]);
@@ -106,8 +123,10 @@ class CommandeAction extends AbstractController {
         foreach ($produits as $produit) {
             $object = $repo->findOneBy(array('id' => $produit["id"]));
             if (!null == $object) {
-                $prix += $object->getPrix();
-                $data->addCommandeProduit($object,$produit["quantite"]);
+                if ($produit["quantite"] > 0) {
+                    $prix += $object->getPrix();
+                    $data->addCommandeProduit($object,$produit["quantite"]);
+                }   
             }
         }
     }

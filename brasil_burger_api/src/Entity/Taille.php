@@ -3,13 +3,14 @@
 namespace App\Entity;
 
 use App\Entity\Boisson;
-use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\TailleRepository;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Core\Annotation\ApiSubresource;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TailleRepository::class)]
 #[ApiResource(
@@ -31,7 +32,7 @@ class Taille
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Groups(["taille:read","boisson:read","menu:read"])]
+    #[Groups(["taille:read","boisson:read","menu:read","boisson:write","commande:write","menu:write"])]
     private $id;
 
     #[ORM\Column(type: 'string', length: 255,unique:true)]
@@ -44,20 +45,21 @@ class Taille
     #[Groups(["taille:write","taille:read","boisson:read","menu:read"])]
     private $prix;
 
-    #[ORM\ManyToMany(targetEntity: Boisson::class, inversedBy: 'tailles')]
-    #[Groups(["taille:read"])]
-    private $boissons;
-
-    #[ORM\ManyToOne(targetEntity: Menu::class, inversedBy: 'tailles')]
-    private $menu;
-
     #[ORM\Column(type: 'boolean', nullable: true)]
     private $isEtat;
 
+    #[ORM\OneToMany(mappedBy: 'taille', targetEntity: MenuTaille::class)]
+    private $menuTailles;
+
+    #[ORM\OneToMany(mappedBy: 'taille', targetEntity: BoissonTaille::class)]
+    #[ApiSubresource]
+    private $boissonTailles;
+
     public function __construct()
     {
-        $this->boissons = new ArrayCollection();
         $this->isEtat = true;
+        $this->menuTailles = new ArrayCollection();
+        $this->boissonTailles = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -89,30 +91,6 @@ class Taille
         return $this;
     }
 
-    /**
-     * @return Collection<int, Boisson>
-     */
-    public function getBoissons(): Collection
-    {
-        return $this->boissons;
-    }
-
-    public function addBoisson(Boisson $boisson): self
-    {
-        if (!$this->boissons->contains($boisson)) {
-            $this->boissons[] = $boisson;
-        }
-
-        return $this;
-    }
-
-    public function removeBoisson(Boisson $boisson): self
-    {
-        $this->boissons->removeElement($boisson);
-
-        return $this;
-    }
-
     public function getMenu(): ?Menu
     {
         return $this->menu;
@@ -133,6 +111,66 @@ class Taille
     public function setIsEtat(?bool $isEtat): self
     {
         $this->isEtat = $isEtat;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, MenuTaille>
+     */
+    public function getMenuTailles(): Collection
+    {
+        return $this->menuTailles;
+    }
+
+    public function addMenuTaille(MenuTaille $menuTaille): self
+    {
+        if (!$this->menuTailles->contains($menuTaille)) {
+            $this->menuTailles[] = $menuTaille;
+            $menuTaille->setTaille($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMenuTaille(MenuTaille $menuTaille): self
+    {
+        if ($this->menuTailles->removeElement($menuTaille)) {
+            // set the owning side to null (unless already changed)
+            if ($menuTaille->getTaille() === $this) {
+                $menuTaille->setTaille(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, BoissonTaille>
+     */
+    public function getBoissonTailles(): Collection
+    {
+        return $this->boissonTailles;
+    }
+
+    public function addBoissonTaille(BoissonTaille $boissonTaille): self
+    {
+        if (!$this->boissonTailles->contains($boissonTaille)) {
+            $this->boissonTailles[] = $boissonTaille;
+            $boissonTaille->setTaille($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBoissonTaille(BoissonTaille $boissonTaille): self
+    {
+        if ($this->boissonTailles->removeElement($boissonTaille)) {
+            // set the owning side to null (unless already changed)
+            if ($boissonTaille->getTaille() === $this) {
+                $boissonTaille->setTaille(null);
+            }
+        }
 
         return $this;
     }

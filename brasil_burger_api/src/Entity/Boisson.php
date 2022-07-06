@@ -5,11 +5,10 @@ namespace App\Entity;
 use App\Entity\Taille;
 use App\Entity\Produit;
 use Doctrine\ORM\Mapping as ORM;
-use App\Controller\BoissonController;
+use App\Controller\EditProduitAction;
 use App\Repository\BoissonRepository;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
-use phpDocumentor\Reflection\Types\Nullable;
 use ApiPlatform\Core\Annotation\ApiSubresource;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -18,22 +17,24 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: BoissonRepository::class)]
 #[ApiResource(
     attributes: ["security" => "is_granted('ROLE_GESTIONNAIRE')"],
-    denormalizationContext: ['groups' => ['product:write']],
+    denormalizationContext: ['groups' => ['product:write',"boisson:write"]],
     normalizationContext: ['groups' => ['boisson:read',"product:read"]],
-    /* subresourceOperations: [
-        'api_boissons_taille_get_subresource' => [
-            'method' => 'GET',
-        ],
-    ], */
     collectionOperations: [
         'post' => [
-            'controller' => BoissonController::class,
+            'input_formats' => [
+                'multipart' => ['multipart/form-data'],
+            ],
         ],
+        'get'
     ],
     itemOperations: [
-        'get',
+        'get'=> ["security" => "is_granted('ROLE_VISITER')"],
         'put' => [
-            'controller' => BoissonController::class,
+            'method' => 'POST',
+            'controller' => EditProduitAction::class,
+            'input_formats' => [
+                'multipart' => ['multipart/form-data'],
+            ],
         ],
         'delete'
     ]
@@ -41,42 +42,49 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class Boisson extends Produit
 {
-    #[ORM\ManyToMany(targetEntity: Taille::class, mappedBy: 'boissons')]
-    #[Assert\NotNull(message:"veuillez choisir des tailles obligatoire")]
-    #[Groups(["boisson:read","boisson:write"])]
-    private $tailles;
+    #[Groups(["boisson:read"])]
+    protected $id;
 
+    #[ORM\OneToMany(mappedBy: 'boisson', targetEntity: BoissonTaille::class,cascade:['persist'])]
+    #[Groups(["boisson:write","boisson:read"])]
+    #[ApiSubresource]
+    private $boissonTailles;
 
     public function __construct()
     {
-        $this->tailles = new ArrayCollection();
+        parent::__construct();
+        $this->boissonTailles = new ArrayCollection();
     }
 
     /**
-     * @return Collection<int, Taille>
+     * @return Collection<int, BoissonTaille>
      */
-    public function getTailles(): Collection
+    public function getBoissonTailles(): Collection
     {
-        return $this->tailles;
+        return $this->boissonTailles;
     }
 
-    public function addTaille(Taille $taille): self
+    public function addBoissonTaille(BoissonTaille $boissonTaille): self
     {
-        if (!$this->tailles->contains($taille)) {
-            $this->tailles[] = $taille;
-            $taille->addBoisson($this);
+        if (!$this->boissonTailles->contains($boissonTaille)) {
+            $this->boissonTailles[] = $boissonTaille;
+            $boissonTaille->setBoisson($this);
         }
 
         return $this;
     }
 
-    public function removeTaille(Taille $taille): self
+    public function removeBoissonTaille(BoissonTaille $boissonTaille): self
     {
-        if ($this->tailles->removeElement($taille)) {
-            $taille->removeBoisson($this);
+        if ($this->boissonTailles->removeElement($boissonTaille)) {
+            // set the owning side to null (unless already changed)
+            if ($boissonTaille->getBoisson() === $this) {
+                $boissonTaille->setBoisson(null);
+            }
         }
 
         return $this;
     }
 
+   
 }

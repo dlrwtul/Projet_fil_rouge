@@ -25,6 +25,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
             'method' => 'POST',
             'path' => '/users/register',
             'controller' => RegistrationsController::class,
+            "security" => "is_granted('ROLE_GESTIONNAIRE')",
         ],
         'verify_mail' => [
             'method' => 'PATCH',
@@ -51,7 +52,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Groups("user:read")]
+    #[Groups("user:read","commande:write","livraison:write","user:id",)]
     protected $id;
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
@@ -68,12 +69,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank(message:"nom is required")]
-    #[Groups(["user:write","user:read","user:update","commande:read"])]
+    #[Groups(["user:write","user:read","user:update","commande:read","livraison:read"])]
     protected $nom;
 
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank(message:"prenom is required")]
-    #[Groups(["user:write","user:read","user:update","commande:read"])]
+    #[Groups(["user:write","user:read","user:update","commande:read","livraison:read"])]
     protected $prenom;
 
     #[ORM\Column(type: 'boolean')]
@@ -87,7 +88,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $produits;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Groups("user:telephone","commande:read")]
+    #[Groups("user:telephone","commande:read","livraison:read")]
     private $telephone;
 
     #[Assert\NotBlank(message:"password is required")]
@@ -104,6 +105,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Commande::class)]
     private $commandes;
 
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Livraison::class)]
+    private $livraisons;
+
 
     public function __construct()
     {
@@ -112,6 +116,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->isEtat = false;
         $this->generateToken();
         $this->commandes = new ArrayCollection();
+        $this->livraisons = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -344,6 +349,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($commande->getUser() === $this) {
                 $commande->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Livraison>
+     */
+    public function getLivraisons(): Collection
+    {
+        return $this->livraisons;
+    }
+
+    public function addLivraison(Livraison $livraison): self
+    {
+        if (!$this->livraisons->contains($livraison)) {
+            $this->livraisons[] = $livraison;
+            $livraison->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLivraison(Livraison $livraison): self
+    {
+        if ($this->livraisons->removeElement($livraison)) {
+            // set the owning side to null (unless already changed)
+            if ($livraison->getUser() === $this) {
+                $livraison->setUser(null);
             }
         }
 
