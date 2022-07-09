@@ -6,6 +6,7 @@ use App\Validator\MenuValidator;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\MenuRepository;
 use App\Controller\EditProduitAction;
+use App\Validator\MenuDoublonsValidator;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
 use ApiPlatform\Core\Annotation\ApiSubresource;
@@ -17,6 +18,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: MenuRepository::class)]
 #[Assert\Callback([MenuValidator::class, 'validate'])]
+#[Assert\Callback([MenuDoublonsValidator::class, 'validate'])]
 #[UniqueEntity('nom')]
 #[ApiResource(
     //input: MenuInput::class,
@@ -79,11 +81,9 @@ class Menu extends Produit
     private $commandeMenus;
 
     #[ORM\OneToMany(mappedBy: 'menu', targetEntity: CommandeMenuBoissonTaille::class,cascade:["persist"])]
-    private $commandeMenuBoissonTailles;
-
-    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: CommandeBoissonTaille::class)]
     #[Groups(["commande:write","commande:read"])]
-    private $commandeBoissonTaille;
+    #[Assert\Valid]
+    private $commandeMenuBoissonTailles;
 
     public function __construct()
     {
@@ -93,7 +93,6 @@ class Menu extends Produit
         $this->menuPortionFrites = new ArrayCollection();
         $this->commandeMenus = new ArrayCollection();
         $this->commandeMenuBoissonTailles = new ArrayCollection();
-        $this->commandeBoissonTaille = new ArrayCollection();
     }
 
     /**
@@ -240,36 +239,6 @@ class Menu extends Produit
             // set the owning side to null (unless already changed)
             if ($commandeMenuBoissonTaille->getMenu() === $this) {
                 $commandeMenuBoissonTaille->setMenu(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, CommandeBoissonTaille>
-     */
-    public function getCommandeBoissonTaille(): Collection
-    {
-        return $this->commandeBoissonTaille;
-    }
-
-    public function addCommandeBoissonTaille(CommandeBoissonTaille $commandeBoissonTaille): self
-    {
-        if (!$this->commandeBoissonTaille->contains($commandeBoissonTaille)) {
-            $this->commandeBoissonTaille[] = $commandeBoissonTaille;
-            $commandeBoissonTaille->setMenu($this);
-        }
-
-        return $this;
-    }
-
-    public function removeCommandeBoissonTaille(CommandeBoissonTaille $commandeBoissonTaille): self
-    {
-        if ($this->commandeBoissonTaille->removeElement($commandeBoissonTaille)) {
-            // set the owning side to null (unless already changed)
-            if ($commandeBoissonTaille->getMenu() === $this) {
-                $commandeBoissonTaille->setMenu(null);
             }
         }
 

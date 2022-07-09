@@ -22,17 +22,16 @@ class Produit
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Groups("product:read","taille:read","commande:read","commande:write")]
+    #[Groups("product:read","taille:read","commande:read","commande:write","boissonTaille:read")]
     protected $id;
 
     #[ORM\Column(type: 'string', length: 255,unique: true )]
     #[Assert\NotBlank(message:"Nom obligatoire")]
-    #[Groups(["product:read","product:write","taille:read","commande:read","boisson:read"])]
+    #[Groups(["product:read","product:write","taille:read","commande:read","boisson:read","boissonTaille:read"])]
     protected $nom;
 
     #[ORM\Column(type: 'blob')]
-    //#[Assert\NotBlank(message:"Image obligatoire")]
-    #[Groups(["product:read","product:read","commande:read","boisson:read","taille:read"])]
+    #[Groups(["product:read","product:read","commande:read","boisson:read","taille:read","boissonTaille:read"])]
     protected $image;
 
     #[ORM\Column(type: 'float',nullable: true)]
@@ -49,15 +48,8 @@ class Produit
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'produits')]
     private $user;
 
-    /* #[ORM\ManyToOne(targetEntity: Commande::class, inversedBy: 'produits')]
-    private $commande; */
-
-    #[ORM\OneToMany(mappedBy: 'produit', targetEntity: CommandeProduit::class)]
-    private $commandeProduits;
-
     public function __construct() {
         $this->isEtat = true;
-        $this->commandeProduits = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -79,10 +71,7 @@ class Produit
 
     public function getImage()
     {
-        //return is_resource($this->image) ? stream_get_contents($this->image) : $this->image;
-        //return \file_put_contents('images',$this->image);
         return base64_encode(stream_get_contents($this->image));
-        //return utf8_encode(stream_get_contents($this->image));
     }
 
     public function setImage($image): self
@@ -91,18 +80,6 @@ class Produit
 
         return $this;
     }
-
-    /* public function getImage(): ?string
-    {
-        return $this->image;
-    }
-
-    public function setImage(string $image): self
-    {
-        $this->image = $image;
-
-        return $this;
-    } */
 
     public function getPrix(): ?float
     {
@@ -139,48 +116,6 @@ class Produit
 
         return $this;
     }
-
-    /* public function getCommande(): ?Commande
-    {
-        return $this->commande;
-    }
-
-    public function setCommande(?Commande $commande): self
-    {
-        $this->commande = $commande;
-
-        return $this;
-    } */
-
-    /**
-     * @return Collection<int, CommandeProduit>
-     */
-    /* public function getCommandeProduits(): Collection
-    {
-        return $this->commandeProduits;
-    }
-
-    public function addCommandeProduit(CommandeProduit $commandeProduit): self
-    {
-        if (!$this->commandeProduits->contains($commandeProduit)) {
-            $this->commandeProduits[] = $commandeProduit;
-            $commandeProduit->setProduit($this);
-        }
-
-        return $this;
-    }
-
-    public function removeCommandeProduit(CommandeProduit $commandeProduit): self
-    {
-        if ($this->commandeProduits->removeElement($commandeProduit)) {
-            // set the owning side to null (unless already changed)
-            if ($commandeProduit->getProduit() === $this) {
-                $commandeProduit->setProduit(null);
-            }
-        }
-
-        return $this;
-    } */
 
     public function getFile(): ?object
     {

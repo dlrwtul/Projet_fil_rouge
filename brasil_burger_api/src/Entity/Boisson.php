@@ -42,7 +42,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class Boisson extends Produit
 {
-    #[Groups(["boisson:read"])]
+    #[Groups(["boisson:read","boissonTaille:read","commande:read"])]
     protected $id;
 
     #[ORM\OneToMany(mappedBy: 'boisson', targetEntity: BoissonTaille::class,cascade:['persist'])]

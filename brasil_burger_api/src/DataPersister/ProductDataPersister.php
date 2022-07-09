@@ -39,6 +39,7 @@ class ProductDataPersister implements DataPersisterInterface {
         $data->setUser($user);
 
         if ($data instanceof Menu) {
+            dd($data);
             $prix = 0;
             $this->calculatrice->calcul($data->getMenuBurgers(), $prix,"getBurger");
             $this->calculatrice->calcul($data->getMenuTailles(), $prix,"getTaille");

@@ -13,34 +13,34 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: BoissonTailleRepository::class)]
-#[ApiResource()]
+#[ApiResource(
+    normalizationContext:["groups" => ["boissonTaille:read"]]
+)]
 class BoissonTaille
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Groups(["boisson:read","commande:read","livraison:read","commande:write"])]
+    #[Groups(["boisson:read","commande:read","livraison:read","commande:write","boissonTaille:read"])]
     private $id;
 
     #[ORM\Column(type: 'integer')]
-    #[Groups(["boisson:read","boisson:write"])]
+    #[Groups(["boisson:read","boisson:write","boissonTaille:read"])]
     #[Assert\Positive()]
     private $quantiteStock;
 
     #[ORM\Column(type: 'string', length: 255,nullable: true)]
     private $etat = EtatService::ETAT_DISPONIBLE;
 
-    #[ORM\ManyToOne(targetEntity: Commande::class, inversedBy: 'boissonTailles')]
-    private $commande;
-
     #[ORM\Column(type: 'boolean')]
     private $isEtat = true;
 
     #[ORM\ManyToOne(targetEntity: Boisson::class, inversedBy: 'boissonTailles')]
+    #[Groups(["boissonTaille:read","commande:read"])]
     private $boisson;
 
     #[ORM\ManyToOne(targetEntity: Taille::class, inversedBy: 'boissonTailles')]
-    #[Groups(["boisson:write","boisson:read"])]
+    #[Groups(["boisson:write","boisson:read","boissonTaille:read","commande:read"])]
     private $taille;
 
     #[ORM\OneToMany(mappedBy: 'boissonTaille', targetEntity: CommandeMenuBoissonTaille::class)]
@@ -81,18 +81,6 @@ class BoissonTaille
     public function setEtat(string $etat): self
     {
         $this->etat = $etat;
-
-        return $this;
-    }
-
-    public function getCommande(): ?Commande
-    {
-        return $this->commande;
-    }
-
-    public function setCommande(?Commande $commande): self
-    {
-        $this->commande = $commande;
 
         return $this;
     }
@@ -162,4 +150,34 @@ class BoissonTaille
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, CommandeBoissonTaille>
+     */
+    /* public function getCommandeBoissonTailles(): Collection
+    {
+        return $this->commandeBoissonTailles;
+    }
+
+    public function addCommandeBoissonTaille(CommandeBoissonTaille $commandeBoissonTaille): self
+    {
+        if (!$this->commandeBoissonTailles->contains($commandeBoissonTaille)) {
+            $this->commandeBoissonTailles[] = $commandeBoissonTaille;
+            $commandeBoissonTaille->setBoissonTaille($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommandeBoissonTaille(CommandeBoissonTaille $commandeBoissonTaille): self
+    {
+        if ($this->commandeBoissonTailles->removeElement($commandeBoissonTaille)) {
+            // set the owning side to null (unless already changed)
+            if ($commandeBoissonTaille->getBoissonTaille() === $this) {
+                $commandeBoissonTaille->setBoissonTaille(null);
+            }
+        }
+
+        return $this;
+    } */
 }

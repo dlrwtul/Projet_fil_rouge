@@ -3,11 +3,13 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Core\Annotation\ApiResource;
 use Symfony\Component\Serializer\Annotation\Groups;
-use App\Repository\CommandeMenuBoissonTailleRepository;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Repository\CommandeMenuBoissonTailleRepository;
 
 #[ORM\Entity(repositoryClass: CommandeMenuBoissonTailleRepository::class)]
+#[ApiResource]
 class CommandeMenuBoissonTaille
 {
     #[ORM\Id]
@@ -23,6 +25,7 @@ class CommandeMenuBoissonTaille
 
     #[ORM\ManyToOne(targetEntity: BoissonTaille::class, inversedBy: 'commandeMenuBoissonTailles')]
     #[Groups(["commande:write","commande:read"])]
+    #[Assert\NotNull()]
     private $boissonTaille;
 
     #[ORM\Column(type: 'integer')]
