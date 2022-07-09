@@ -31,12 +31,12 @@ class Quartier
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Groups(["quartier:read","quartier:read","zone:read","commande:write"])]
+    #[Groups(["quartier:read","quartier:read","zone:read","commande:write","commande:read"])]
     private $id;
 
     #[ORM\Column(type: 'string', length: 255,unique: true)]
     #[Assert\NotBlank(message:"nom de quartier obligatoire")]
-    #[Groups(["quartier:write","quartier:read","zone:read"])]
+    #[Groups(["quartier:write","quartier:read","zone:read","commande:read"])]
     private $libelle;
 
     #[ORM\Column(type: 'boolean')]

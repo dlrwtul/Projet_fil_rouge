@@ -4,18 +4,19 @@ namespace App\Entity;
 
 use App\Service\EtatService;
 use Doctrine\ORM\Mapping as ORM;
-use App\Controller\CommandeAction;
 use App\Repository\CommandeRepository;
 use ApiPlatform\Core\Annotation\ApiFilter;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
 use ApiPlatform\Core\Annotation\ApiSubresource;
-use App\Validator\Constraints\MinimalProperties;
+use App\Validator\CommandeMenuTaillesValidator;
+use App\Validator\CommandeMenusBurgersValidator;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
+use App\Validator\CommandeDoublonsValidator;
 
 #[ORM\Entity(repositoryClass: CommandeRepository::class)]
 #[ApiResource(
@@ -27,7 +28,7 @@ use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
             "security_post_denormalize" => "is_granted('CREATE', _api_resource_class)",
             //"deserialize" => false
         ],
-        'get' =>[ "security" => "is_granted('ALL', _api_resource_class)"],
+        'get' //=>[ "security" => "is_granted('ALL', _api_resource_class)"],
     ],
     itemOperations: [
         'get' => [ 
@@ -39,6 +40,9 @@ use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 
 #[ApiFilter(OrderFilter::class, properties: ['id', 'createdAt'], arguments: ['orderParameterName' => 'order'])]
 #[ApiFilter(SearchFilter::class, properties: ['zone.libelle' => 'partial','etat' => 'exact'])]
+#[Assert\Callback([CommandeMenusBurgersValidator::class, 'validate'])]
+#[Assert\Callback([CommandeDoublonsValidator::class, 'validate'])]
+#[Assert\Callback([CommandeMenuTaillesValidator::class, 'validate'])]
 
 class Commande
 {
@@ -64,14 +68,15 @@ class Commande
     private $isEtat =true;
 
     #[ORM\ManyToOne(targetEntity: Zone::class, inversedBy: 'commandes')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     #[Groups(["commande:read","commande:write","livraison:read"])]
-    #[Assert\NotNull(message:"Zone Obligatoire")]
+    //#[Assert\NotNull(message:"Zone Obligatoire")]
     private $zone;
 
     #[ORM\ManyToOne(targetEntity: Quartier::class, inversedBy: 'commandes')]
+    #[ORM\JoinColumn(nullable: true)]
     #[Groups(["commande:read","commande:write","livraison:read"])]
-    #[Assert\NotNull(message:"Quartier Obligatoire")]
+    //#[Assert\NotNull(message:"Quartier Obligatoire")]
     private $quartier;
     
     #[ORM\ManyToOne(targetEntity: Client::class, inversedBy: 'commandes')]
@@ -92,31 +97,35 @@ class Commande
     private $isALivrer;
 
     #[ORM\OneToMany(mappedBy: 'commande', targetEntity: CommandeBoissonTaille::class,cascade:["persist"])]
-    #[Groups(["commande:write","commande:read","livraison:read"])]
+    #[Groups(["commande:write"])]
     #[Assert\Valid()]
     #[ApiSubresource]
     private $commandeBoissonTailles;
 
     #[ORM\OneToMany(mappedBy: 'commande', targetEntity: CommandeMenu::class,cascade:["persist"])]
-    #[Groups(["commande:write","commande:read","livraison:read"])]
+    #[Groups(["commande:write"])]
     #[Assert\Valid()]
     #[ApiSubresource]
     private $commandeMenus;
 
     #[ORM\OneToMany(mappedBy: 'commande', targetEntity: CommandeBurger::class,cascade:["persist"])]
-    #[Groups(["commande:write","commande:read","livraison:read"])]
+    #[Groups(["commande:write"])]
     #[Assert\Valid()]
     #[ApiSubresource]
     private $commandeBurgers;
 
     #[ORM\OneToMany(mappedBy: 'commande', targetEntity: CommandePortionFrites::class,cascade:["persist"])]
-    #[Groups(["commande:write","commande:read","livraison:read"])]
+    #[Groups(["commande:write"])]
     #[Assert\Valid()]
     #[ApiSubresource]
     private $commandePortionFrites;
 
     #[ORM\OneToMany(mappedBy: 'commande', targetEntity: CommandeMenuBoissonTaille::class)]
     private $commandeMenuBoissonTailles;
+
+    #[ORM\OneToMany(mappedBy: 'commande', targetEntity: CommandeProduit::class)]
+    #[Groups(["commande:read"])]
+    private $commandeProduits;
 
 
     public function __construct()
@@ -129,6 +138,7 @@ class Commande
         $this->commandeBurgers = new ArrayCollection();
         $this->commandePortionFrites = new ArrayCollection();
         $this->commandeMenuBoissonTailles = new ArrayCollection();
+        $this->commandeProduits = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -420,6 +430,36 @@ class Commande
             // set the owning side to null (unless already changed)
             if ($commandeMenuBoissonTaille->getCommande() === $this) {
                 $commandeMenuBoissonTaille->setCommande(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CommandeProduit>
+     */
+    public function getCommandeProduits(): Collection
+    {
+        return $this->commandeProduits;
+    }
+
+    public function addCommandeProduit(CommandeProduit $commandeProduit): self
+    {
+        if (!$this->commandeProduits->contains($commandeProduit)) {
+            $this->commandeProduits[] = $commandeProduit;
+            $commandeProduit->setCommande($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommandeProduit(CommandeProduit $commandeProduit): self
+    {
+        if ($this->commandeProduits->removeElement($commandeProduit)) {
+            // set the owning side to null (unless already changed)
+            if ($commandeProduit->getCommande() === $this) {
+                $commandeProduit->setCommande(null);
             }
         }
 

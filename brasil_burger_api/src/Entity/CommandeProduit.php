@@ -8,6 +8,9 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CommandeProduitRepository::class)]
+#[ORM\InheritanceType("JOINED")]
+#[ORM\DiscriminatorColumn(name: "type", type: "string")]
+#[ORM\DiscriminatorMap(["commandeBurger" => "CommandeBurger", "commandeBoissonTaille" => "CommandeBoissonTaille", "commandePortionFrites" => "CommandePortionFrites","commandeMenu" => "CommandeMenu"])]
 class CommandeProduit
 {
     #[ORM\Id]
@@ -25,6 +28,9 @@ class CommandeProduit
     #[ORM\Column(type: 'float')]
     #[Groups(["commande:read"])]
     private $prix;
+
+    #[ORM\ManyToOne(targetEntity: Commande::class, inversedBy: 'commandeProduits')]
+    private $commande;
 
     public function __construct(int $quantite = null){
         $this->quantite = $quantite;
@@ -55,6 +61,18 @@ class CommandeProduit
     public function setPrix(float $prix): self
     {
         $this->prix = $prix;
+
+        return $this;
+    }
+
+    public function getCommande(): ?Commande
+    {
+        return $this->commande;
+    }
+
+    public function setCommande(?Commande $commande): self
+    {
+        $this->commande = $commande;
 
         return $this;
     }
