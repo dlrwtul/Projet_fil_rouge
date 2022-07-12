@@ -7,9 +7,12 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Repository\LivraisonRepository;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Validator\LivraisonDoublonsValidator;
+use App\Validator\LivraisonCommandesValidator;
 use ApiPlatform\Core\Annotation\ApiSubresource;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: LivraisonRepository::class)]
 #[ApiResource(
@@ -19,7 +22,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         'post' => [
             "security_post_denormalize" => "is_granted('ALL', object)"
         ],
-        'get' //=>[ "security" => "is_granted('READ', object)"],
+        'get' =>[ "security" => "is_granted('ALL_GET', _api_resource_class)"],
     ],
     itemOperations: [
         'get' => [ "security" => "is_granted('ALL', object)"],
@@ -27,6 +30,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         'put' =>[ "security" => "is_granted('ALL', object)"],
     ]
 )]
+#[Assert\Callback([LivraisonCommandesValidator::class, 'validate'])]
 class Livraison
 {
     #[ORM\Id]
@@ -41,11 +45,13 @@ class Livraison
 
     #[ORM\ManyToOne(targetEntity: Livreur::class, inversedBy: 'livraisons')]
     #[Groups(["livraison:read","livraison:write"])]
+    #[Assert\NotNull(message:"Quartier Obligatoire")]
     private $livreur;
 
     #[ORM\OneToMany(mappedBy: 'livraison', targetEntity: Commande::class)]
     #[Groups(["livraison:read","livraison:write"])]
     #[ApiSubresource]
+    #[Assert\Count(min:1)]
     private $commandes;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'livraisons')]
@@ -102,6 +108,7 @@ class Livraison
         if (!$this->commandes->contains($commande)) {
             $this->commandes[] = $commande;
             $commande->setLivraison($this);
+            $commande->setEtat(EtatService::ETAT_EN_COURS_DE_LIVRAISON);
         }
 
         return $this;

@@ -28,7 +28,7 @@ use App\Validator\CommandeDoublonsValidator;
             "security_post_denormalize" => "is_granted('CREATE', _api_resource_class)",
             //"deserialize" => false
         ],
-        'get' //=>[ "security" => "is_granted('ALL', _api_resource_class)"],
+        'get' =>[ "security" => "is_granted('ALL', _api_resource_class)"],
     ],
     itemOperations: [
         'get' => [ 
