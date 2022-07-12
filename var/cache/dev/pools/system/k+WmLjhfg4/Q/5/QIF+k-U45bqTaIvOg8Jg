@@ -1,0 +1,31 @@
+<?php //subresource_operations_64fe92a2b04afd1b0cc26895a31679c2
+
+return [PHP_INT_MAX, [
+    'api_boissons_boisson_tailles_get_subresource' => [
+        'property' => 'boissonTailles',
+        'collection' => true,
+        'resource_class' => 'App\\Entity\\BoissonTaille',
+        'shortNames' => [
+            'BoissonTaille',
+            'Boisson',
+        ],
+        'identifiers' => [
+            'id' => [
+                'App\\Entity\\Boisson',
+                'id',
+                true,
+            ],
+        ],
+        'operation_name' => 'boisson_tailles_get_subresource',
+        'route_name' => 'api_boissons_boisson_tailles_get_subresource',
+        'path' => '/boissons/{id}/boisson_tailles.{_format}',
+        'defaults' => [],
+        'requirements' => [],
+        'options' => [],
+        'host' => '',
+        'schemes' => [],
+        'condition' => '',
+        'controller' => null,
+        'stateless' => null,
+    ],
+]];

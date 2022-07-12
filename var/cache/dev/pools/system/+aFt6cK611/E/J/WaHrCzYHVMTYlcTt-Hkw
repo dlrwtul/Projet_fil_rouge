@@ -1,0 +1,3 @@
+<?php //route_name_7b892a4db7753c62241a66a0cadd2627
+
+return [PHP_INT_MAX, 'api_quartiers_get_item'];

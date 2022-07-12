@@ -1,0 +1,3 @@
+<?php //App%255CEntity%255CMenu%2523getMenuPortionFrites
+
+return [PHP_INT_MAX, []];

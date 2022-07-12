@@ -1,0 +1,3 @@
+<?php //route_name_f6859b676520c46c29a74560db25204a
+
+return [PHP_INT_MAX, 'api_boissons_get_item'];

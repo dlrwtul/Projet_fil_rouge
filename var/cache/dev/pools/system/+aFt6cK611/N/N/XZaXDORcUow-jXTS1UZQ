@@ -1,0 +1,3 @@
+<?php //route_name_c3cb1eeeed967811a74242e23297a3c0
+
+return [PHP_INT_MAX, 'api_zones_get_item'];

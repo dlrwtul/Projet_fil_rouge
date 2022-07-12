@@ -1,0 +1,3 @@
+<?php //route_name_4dc9a7dbcb577310716535529272c8ee
+
+return [PHP_INT_MAX, 'api_commande_menus_get_item'];

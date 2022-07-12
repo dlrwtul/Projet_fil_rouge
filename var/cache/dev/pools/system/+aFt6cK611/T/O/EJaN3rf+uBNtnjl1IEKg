@@ -1,0 +1,3 @@
+<?php //route_name_4c9ddd6e25a55617a013c30139997c01
+
+return [PHP_INT_MAX, 'api_commande_boisson_tailles_get_item'];

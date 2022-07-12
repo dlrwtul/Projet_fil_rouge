@@ -1,0 +1,3 @@
+<?php //route_name_3d4d81a8d89e6ec51a7cdfc2311a6d4e
+
+return [PHP_INT_MAX, 'api_commande_burgers_get_item'];

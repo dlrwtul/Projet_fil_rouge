@@ -1,0 +1,31 @@
+<?php //subresource_operations_a0c68e914dcd28b783506a2bdc70229d
+
+return [PHP_INT_MAX, [
+    'api_zones_quartiers_get_subresource' => [
+        'property' => 'quartiers',
+        'collection' => true,
+        'resource_class' => 'App\\Entity\\Quartier',
+        'shortNames' => [
+            'Quartier',
+            'Zone',
+        ],
+        'identifiers' => [
+            'id' => [
+                'App\\Entity\\Zone',
+                'id',
+                true,
+            ],
+        ],
+        'operation_name' => 'quartiers_get_subresource',
+        'route_name' => 'api_zones_quartiers_get_subresource',
+        'path' => '/zones/{id}/quartiers.{_format}',
+        'defaults' => [],
+        'requirements' => [],
+        'options' => [],
+        'host' => '',
+        'schemes' => [],
+        'condition' => '',
+        'controller' => null,
+        'stateless' => null,
+    ],
+]];

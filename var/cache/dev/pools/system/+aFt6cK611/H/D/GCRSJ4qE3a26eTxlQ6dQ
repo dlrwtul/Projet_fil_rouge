@@ -1,0 +1,3 @@
+<?php //route_name_5f21be14a93b7a31b6f475d14b98fa40
+
+return [PHP_INT_MAX, 'api_tailles_get_item'];

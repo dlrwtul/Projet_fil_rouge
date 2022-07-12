@@ -1,0 +1,3 @@
+<?php //route_name_2b8bc08c7010b33f2ec33469f2eb6e19
+
+return [PHP_INT_MAX, 'api_portion_frites_get_item'];

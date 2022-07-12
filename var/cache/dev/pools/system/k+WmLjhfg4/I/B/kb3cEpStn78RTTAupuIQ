@@ -1,0 +1,85 @@
+<?php //subresource_operations_58524aa0c214e30f3b01fedea6b92800
+
+return [PHP_INT_MAX, [
+    'api_menus_menu_burgers_get_subresource' => [
+        'property' => 'menuBurgers',
+        'collection' => true,
+        'resource_class' => 'App\\Entity\\MenuBurger',
+        'shortNames' => [
+            'MenuBurger',
+            'Menu',
+        ],
+        'identifiers' => [
+            'id' => [
+                'App\\Entity\\Menu',
+                'id',
+                true,
+            ],
+        ],
+        'operation_name' => 'menu_burgers_get_subresource',
+        'route_name' => 'api_menus_menu_burgers_get_subresource',
+        'path' => '/menus/{id}/menu_burgers.{_format}',
+        'defaults' => [],
+        'requirements' => [],
+        'options' => [],
+        'host' => '',
+        'schemes' => [],
+        'condition' => '',
+        'controller' => null,
+        'stateless' => null,
+    ],
+    'api_menus_menu_tailles_get_subresource' => [
+        'property' => 'menuTailles',
+        'collection' => true,
+        'resource_class' => 'App\\Entity\\MenuTaille',
+        'shortNames' => [
+            'MenuTaille',
+            'Menu',
+        ],
+        'identifiers' => [
+            'id' => [
+                'App\\Entity\\Menu',
+                'id',
+                true,
+            ],
+        ],
+        'operation_name' => 'menu_tailles_get_subresource',
+        'route_name' => 'api_menus_menu_tailles_get_subresource',
+        'path' => '/menus/{id}/menu_tailles.{_format}',
+        'defaults' => [],
+        'requirements' => [],
+        'options' => [],
+        'host' => '',
+        'schemes' => [],
+        'condition' => '',
+        'controller' => null,
+        'stateless' => null,
+    ],
+    'api_menus_menu_portion_frites_get_subresource' => [
+        'property' => 'menuPortionFrites',
+        'collection' => true,
+        'resource_class' => 'App\\Entity\\MenuPortionFrites',
+        'shortNames' => [
+            'MenuPortionFrites',
+            'Menu',
+        ],
+        'identifiers' => [
+            'id' => [
+                'App\\Entity\\Menu',
+                'id',
+                true,
+            ],
+        ],
+        'operation_name' => 'menu_portion_frites_get_subresource',
+        'route_name' => 'api_menus_menu_portion_frites_get_subresource',
+        'path' => '/menus/{id}/menu_portion_frites.{_format}',
+        'defaults' => [],
+        'requirements' => [],
+        'options' => [],
+        'host' => '',
+        'schemes' => [],
+        'condition' => '',
+        'controller' => null,
+        'stateless' => null,
+    ],
+]];

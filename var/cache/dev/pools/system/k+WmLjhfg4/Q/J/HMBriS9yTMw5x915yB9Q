@@ -1,0 +1,90 @@
+<?php //subresource_operations_a7f8cfd49d2e4051a9471bd64e52fcd7
+
+return [PHP_INT_MAX, [
+    'api_complements_portion_frites_get_subresource' => [
+        'property' => 'portionFrites',
+        'collection' => true,
+        'resource_class' => 'App\\Entity\\PortionFrites',
+        'shortNames' => [
+            'PortionFrites',
+            'Complement',
+        ],
+        'identifiers' => [
+            'id' => [
+                'App\\Entity\\Complement',
+                'id',
+                true,
+            ],
+        ],
+        'operation_name' => 'portion_frites_get_subresource',
+        'route_name' => 'api_complements_portion_frites_get_subresource',
+        'path' => '/complements/{id}/portion_frites.{_format}',
+        'defaults' => [],
+        'requirements' => [],
+        'options' => [],
+        'host' => '',
+        'schemes' => [],
+        'condition' => '',
+        'controller' => null,
+        'stateless' => null,
+    ],
+    'api_complements_boissons_get_subresource' => [
+        'property' => 'boissons',
+        'collection' => true,
+        'resource_class' => 'App\\Entity\\Boisson',
+        'shortNames' => [
+            'Boisson',
+            'Complement',
+        ],
+        'identifiers' => [
+            'id' => [
+                'App\\Entity\\Complement',
+                'id',
+                true,
+            ],
+        ],
+        'operation_name' => 'boissons_get_subresource',
+        'route_name' => 'api_complements_boissons_get_subresource',
+        'path' => '/complements/{id}/boissons.{_format}',
+        'defaults' => [],
+        'requirements' => [],
+        'options' => [],
+        'host' => '',
+        'schemes' => [],
+        'condition' => '',
+        'controller' => null,
+        'stateless' => null,
+    ],
+    'api_complements_boissons_boisson_tailles_get_subresource' => [
+        'property' => 'boissonTailles',
+        'collection' => true,
+        'resource_class' => 'App\\Entity\\BoissonTaille',
+        'shortNames' => [
+            'BoissonTaille',
+            'Boisson',
+        ],
+        'identifiers' => [
+            'id' => [
+                'App\\Entity\\Complement',
+                'id',
+                true,
+            ],
+            'boissons' => [
+                'App\\Entity\\Boisson',
+                'id',
+                true,
+            ],
+        ],
+        'operation_name' => 'boissons_boisson_tailles_get_subresource',
+        'route_name' => 'api_complements_boissons_boisson_tailles_get_subresource',
+        'path' => '/complements/{id}/boissons/{boissons}/boisson_tailles.{_format}',
+        'defaults' => [],
+        'requirements' => [],
+        'options' => [],
+        'host' => '',
+        'schemes' => [],
+        'condition' => '',
+        'controller' => null,
+        'stateless' => null,
+    ],
+]];
